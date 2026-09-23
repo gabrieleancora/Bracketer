@@ -26,9 +26,9 @@ async function act(url, payload) {
   catch (error) { showNotice(error.message); }
 }
 
-function showNotice(message) {
+function showNotice(message, success=false) {
   const notice = document.getElementById('notice');
-  notice.textContent = message; notice.hidden = !message;
+  notice.textContent = message; notice.hidden = !message; notice.classList.toggle('success', success);
 }
 
 function button(label, callback, className='small-button') {
@@ -87,6 +87,7 @@ function drawOwner() {
     const header = el('div', 'controls-heading'); header.append(el('span', 'step', 'PUBLIC VOTE'), el('h3', '', current ? `${nameFor(current.a)} vs ${nameFor(current.b)}` : 'Next matchup'));
     controls.append(header);
     const phase = state.voting.phase;
+    controls.dataset.phase = phase;
     if (phase === 'idle') {
       const next = current || state.rounds.flat().find(match => match.a !== null && match.b !== null && match.winner === null);
       controls.append(next ? button('Open voting →', () => act(`${base}/vote-control`, {action:'open'}), 'primary-button') : el('p', 'muted', 'The bracket is complete.'));
@@ -130,6 +131,7 @@ function drawVote() {
   panel.append(el('span', 'step', 'CURRENT MATCHUP'));
   panel.append(el('h2', '', `${nameFor(current.a)} vs ${nameFor(current.b)}`));
   const phase = state.voting.phase;
+  panel.dataset.phase = phase;
   if (phase === 'open') {
     panel.append(el('p', 'muted', 'Voting is open on the attendee page.'));
   } else if (phase === 'closed') panel.append(el('p', 'muted', 'Voting is closed. Waiting for the winner to be revealed.'));
@@ -157,7 +159,7 @@ async function load(force=false) {
 document.getElementById('published').addEventListener('change', event => act(`${base}/settings`, {field:'published', value:event.target.checked}));
 document.getElementById('public-voting').addEventListener('change', event => act(`${base}/settings`, {field:'public_voting', value:event.target.checked}));
 document.getElementById('copy-owner').addEventListener('click', async () => {
-  try { await navigator.clipboard.writeText(location.href); showNotice('Owner link copied.'); }
+  try { await navigator.clipboard.writeText(location.href); showNotice('Owner link copied.', true); }
   catch { showNotice('Copy the owner link from your browser address bar.'); }
 });
 load();

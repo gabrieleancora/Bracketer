@@ -67,6 +67,7 @@ class BracketFlowTest(unittest.TestCase):
         vote = f'/api/brackets/{bracket_id}/vote'
         self.assertEqual(self.client.post(vote, json={'choice':match['a']}).status_code, 200)
         self.assertTrue(self.client.get(f'/api/brackets/{bracket_id}').json['has_voted'])
+        self.assertEqual(self.client.get(f'/api/brackets/{bracket_id}').json['vote_choice'], match['a'])
         self.assertEqual(self.client.post(vote, json={'choice':match['b']}).status_code, 409)
         self.assertNotIn('counts', self.client.get(f'/api/brackets/{bracket_id}').json)
         self.assertEqual(self.client.get(f'/api/brackets/{bracket_id}').json['results'], {})

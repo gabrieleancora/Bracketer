@@ -164,10 +164,12 @@ def public_state(row, data, owner=False):
     else:
         voter = request.cookies.get("bracketer_voter")
         current = data["voting"]["current"]
-        state["has_voted"] = bool(voter and current and db().execute(
-            "SELECT 1 FROM votes WHERE bracket_id=? AND match_id=? AND voter=?",
+        ballot = (db().execute(
+            "SELECT choice FROM votes WHERE bracket_id=? AND match_id=? AND voter=?",
             (row["id"], current, voter),
-        ).fetchone())
+        ).fetchone() if voter and current else None)
+        state["has_voted"] = ballot is not None
+        state["vote_choice"] = ballot["choice"] if ballot else None
     return state
 
 

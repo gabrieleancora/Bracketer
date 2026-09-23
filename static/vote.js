@@ -23,6 +23,9 @@ function render() {
     return;
   }
   content.append(element('p', 'attendee-match', `${nameFor(match.a)} vs ${nameFor(match.b)}`));
+  if (state.has_voted && state.vote_choice !== null) {
+    content.append(element('p', 'attendee-selection', `Your choice · ${nameFor(state.vote_choice)}`));
+  }
   if (state.voting.phase === 'open') {
     if (state.has_voted) content.append(element('p', 'attendee-message', 'Your vote is recorded. Waiting for the result.'));
     else {
@@ -66,7 +69,6 @@ async function vote(choice) {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Could not record your vote.');
     await load(true);
-    notice.textContent = 'Vote recorded.';
   } catch (error) {
     notice.textContent = error.message;
     buttons.forEach(button => button.disabled = false);

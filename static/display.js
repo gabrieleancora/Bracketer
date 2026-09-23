@@ -24,6 +24,7 @@ function matchCard(match) {
     const row = node('div', 'display-entry');
     if (id === null) row.classList.add('pending');
     if (match.winner === id && id !== null) row.classList.add('winner');
+    if (match.winner === id && id !== null) row.append(node('span', 'display-winner-mark', 'WINNER'));
     const name = node('span', 'display-entry-name', nameFor(id));
     name.title = nameFor(id);
     row.append(name);
@@ -43,6 +44,7 @@ function column(matches, roundIndex, side) {
   lane.style.gridTemplateRows = `repeat(${matches.length}, minmax(0, 1fr))`;
   matches.forEach(match => {
     const slot = node('div', 'display-match-slot');
+    if (match.winner !== null) slot.classList.add('decided');
     slot.append(matchCard(match));
     lane.append(slot);
   });
@@ -71,6 +73,7 @@ function renderTree() {
 function renderFocus() {
   const target = document.getElementById('display-focus');
   target.replaceChildren();
+  target.dataset.phase = state.public_voting ? state.voting.phase : 'manual';
   const match = currentMatch() || nextReadyMatch();
   const phase = state.voting.phase;
   const final = state.rounds.at(-1)[0];
