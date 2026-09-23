@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bracket · Bracketer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="page bracket-page">
+    <header class="site-header"><a class="brand" href="/">BRACKETER<span class="brand-dot">●</span></a><span class="eyebrow" id="page-role">{{ 'OWNER VIEW' if owner else 'PUBLIC BRACKET' }}</span></header>
+    <section class="bracket-intro"><div><p class="kicker" id="status">LOADING</p><h1 id="title"></h1><p class="lead" id="subtitle"></p></div><a class="outline-button" href="/">+ New bracket</a></section>
+    <div id="notice" class="notice" role="status"></div>
+    <section id="owner-tools" class="tools panel" hidden>
+      <div class="tools-top"><div><span class="step">OWNER CONTROLS</span><h2>Run your bracket</h2></div><div class="save-status">Saved automatically</div></div>
+      <div class="setting-grid"><label class="setting-card"><span><strong>Publish bracket</strong><small>Allow anyone with the public link to view it</small></span><input type="checkbox" id="published"></label><label class="setting-card"><span><strong>Public voting</strong><small>Let visitors vote in one matchup at a time</small></span><input type="checkbox" id="public-voting"></label></div>
+      <div id="share" class="share-box" hidden><div><span class="field-label">PUBLIC LINK</span><a id="public-link" target="_blank" rel="noreferrer"></a><p>Scan this code to open the public bracket.</p></div><img id="qr" alt="QR code for public bracket"></div>
+      <div id="vote-controls" class="vote-controls" hidden></div>
+      <div id="song-controls" class="song-controls" hidden></div>
+      <div class="owner-link">Keep this owner link private. <button id="copy-owner" class="text-button">Copy owner link</button></div>
+    </section>
+    <section id="live-vote" class="live-vote panel" hidden></section>
+    <section class="bracket-section"><div class="section-heading"><span class="step">THE BRACKET</span><span id="round-count"></span></div><div id="rounds" class="rounds"></div></section>
+    <footer class="footer">CREATE · PICK · CELEBRATE</footer>
+  </main>
+  <script>window.BRACKET = {{ {'id': bracket_id, 'token': token, 'owner': owner}|tojson }};</script>
+  <script src="{{ url_for('static', filename='bracket.js') }}"></script>
+</body>
+</html>

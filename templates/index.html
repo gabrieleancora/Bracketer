@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create a bracket · Bracketer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="page create-page">
+    <header class="site-header"><a class="brand" href="/">BRACKETER<span class="brand-dot">●</span></a><span class="eyebrow">Make the matchup yours</span></header>
+    <div class="hero-grid">
+      <section class="hero-copy"><p class="kicker">SINGLE ELIMINATION · YOUR RULES</p><h1>Every favorite<br>gets its moment.</h1><p class="lead">Add the contenders, save your bracket, and decide each winner yourself or let a crowd vote.</p><div class="hero-note"><span class="note-icon">↗</span><span>Saved brackets start private. Publish when you're ready.</span></div></section>
+      <section class="panel create-panel">
+        <div class="panel-heading"><span class="step">01 / SETUP</span><h2>Create a bracket</h2></div>
+        <form id="create-form">
+          <label class="field-label" for="title">Bracket name</label>
+          <input id="title" maxlength="100" placeholder="e.g. Best Love Live song" required>
+          <div class="two-column"><div><label class="field-label" for="count">Entries</label><select id="count"><option>2</option><option>4</option><option selected>8</option><option>16</option><option>32</option><option>64</option></select></div><label class="toggle-row love-toggle"><input type="checkbox" id="love-live"><span class="toggle"></span><span><strong>Love Live songs</strong><small>Find YouTube links for matching songs</small></span></label></div>
+          <div class="entry-heading"><span class="field-label">Contenders</span><span class="helper">First-round order is shuffled when saved</span></div>
+          <div id="names" class="name-grid"></div>
+          <p id="error" class="error" role="alert"></p>
+          <button class="primary-button" type="submit">Save private bracket <span>→</span></button>
+        </form>
+      </section>
+    </div>
+    <footer class="footer">CREATE · PICK · CELEBRATE</footer>
+  </main>
+  <script>
+    const count = document.getElementById('count');
+    const names = document.getElementById('names');
+    function drawNames() {
+      const previous = Array.from(names.querySelectorAll('input')).map(input => input.value);
+      names.replaceChildren();
+      for (let i = 0; i < Number(count.value); i++) {
+        const label = document.createElement('label'); label.className = 'name-field';
+        const number = document.createElement('span'); number.textContent = String(i + 1).padStart(2, '0');
+        const input = document.createElement('input'); input.maxLength = 100; input.required = true; input.placeholder = 'Entry name'; input.value = previous[i] || '';
+        label.append(number, input); names.append(label);
+      }
+    }
+    count.addEventListener('change', drawNames); drawNames();
+    document.getElementById('create-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const error = document.getElementById('error'); error.textContent = '';
+      const button = event.currentTarget.querySelector('button[type=submit]'); button.disabled = true;
+      try {
+        const response = await fetch('/api/brackets', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({title:document.getElementById('title').value, names:Array.from(names.querySelectorAll('input')).map(input => input.value), love_live:document.getElementById('love-live').checked})});
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Could not save bracket.');
+        location.href = result.owner_url;
+      } catch (cause) { error.textContent = cause.message; button.disabled = false; }
+    });
+  </script>
+</body>
+</html>
