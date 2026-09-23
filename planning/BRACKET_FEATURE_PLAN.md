@@ -4,6 +4,8 @@
 **Last updated:** 2026-09-23 — projector display, voting QR visibility, bracket layout, and result vote counts.  
 **Purpose:** Record the requested product behavior for implementation agents. This document defines the requested baseline and separates unresolved decisions and optional proposals from it.
 
+**Visual design:** See the [Love Live event design plan](DESIGN_PLAN.md) for the requested replacement of the blue/green scheme, the reference image, proposed palette, component treatments, and design acceptance criteria. This feature plan remains the source for product behavior.
+
 ## Product goal
 
 Build a simple website where an owner can create a bracket, enter names, save it, and publish it through owner/admin controls. The public site is a display of the published bracket, intended for projection so attendees can follow voting and results in real time. It does not offer bracket creation or administration. The bracket owner controls winners directly unless public voting is enabled. With public voting enabled, attendees scan the displayed QR code to access voting without registering.
