@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vote · Bracketer</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='display.css') }}">
+</head>
+<body>
+  <main class="attendee-page">
+    <header class="attendee-header"><span class="brand">BRACKETER<span class="brand-dot">●</span></span><span class="eyebrow">ATTENDEE VOTE</span></header>
+    <section class="attendee-card panel"><span class="step">YOUR VOTE</span><h1 id="title">Loading bracket…</h1><div id="vote-content"></div><div id="notice" class="notice" role="status"></div></section>
+  </main>
+  <script>window.BRACKET_ID = {{ bracket_id|tojson }};</script>
+  <script src="{{ url_for('static', filename='vote.js') }}"></script>
+</body>
+</html>

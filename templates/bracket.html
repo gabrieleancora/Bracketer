@@ -5,16 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Bracket · Bracketer</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% if not owner %}<link rel="stylesheet" href="{{ url_for('static', filename='display.css') }}">{% endif %}
 </head>
 <body>
+{% if owner %}
   <main class="page bracket-page">
-    <header class="site-header"><a class="brand" href="/">BRACKETER<span class="brand-dot">●</span></a><span class="eyebrow" id="page-role">{{ 'OWNER VIEW' if owner else 'PUBLIC BRACKET' }}</span></header>
+    <header class="site-header"><a class="brand" href="/">BRACKETER<span class="brand-dot">●</span></a><span class="eyebrow">OWNER VIEW</span></header>
     <section class="bracket-intro"><div><p class="kicker" id="status">LOADING</p><h1 id="title"></h1><p class="lead" id="subtitle"></p></div><a class="outline-button" href="/">+ New bracket</a></section>
     <div id="notice" class="notice" role="status"></div>
     <section id="owner-tools" class="tools panel" hidden>
       <div class="tools-top"><div><span class="step">OWNER CONTROLS</span><h2>Run your bracket</h2></div><div class="save-status">Saved automatically</div></div>
       <div class="setting-grid"><label class="setting-card"><span><strong>Publish bracket</strong><small>Allow anyone with the public link to view it</small></span><input type="checkbox" id="published"></label><label class="setting-card"><span><strong>Public voting</strong><small>Let visitors vote in one matchup at a time</small></span><input type="checkbox" id="public-voting"></label></div>
-      <div id="share" class="share-box" hidden><div><span class="field-label">PUBLIC LINK</span><a id="public-link" target="_blank" rel="noreferrer"></a><p>Scan this code to open the public bracket.</p></div><img id="qr" alt="QR code for public bracket"></div>
+      <div id="share" class="share-box" hidden><div><span class="field-label">PROJECTOR DISPLAY</span><a id="public-link" target="_blank" rel="noreferrer"></a><p>The voting QR code appears on the public display whenever public voting is enabled.</p></div></div>
       <div id="vote-controls" class="vote-controls" hidden></div>
       <div id="song-controls" class="song-controls" hidden></div>
       <div class="owner-link">Keep this owner link private. <button id="copy-owner" class="text-button">Copy owner link</button></div>
@@ -23,7 +25,16 @@
     <section class="bracket-section"><div class="section-heading"><span class="step">THE BRACKET</span><span id="round-count"></span></div><div id="rounds" class="rounds"></div></section>
     <footer class="footer">CREATE · PICK · CELEBRATE</footer>
   </main>
+{% else %}
+  <main class="display-page" id="display-page">
+    <header class="display-header"><span class="brand">BRACKETER<span class="brand-dot">●</span></span><div class="display-title-group"><span class="step">PUBLIC BRACKET DISPLAY</span><h1 id="title"></h1></div><span class="display-status" id="status">LOADING</span></header>
+    <aside class="display-qr" id="display-qr" hidden><span class="step">SCAN TO VOTE</span><img id="qr" alt="QR code for attendee voting"><p>Open on your phone</p></aside>
+    <section class="display-focus" id="display-focus"></section>
+    <div id="notice" class="notice" role="status"></div>
+    <section class="display-board"><div class="display-board-heading"><span>THE BRACKET</span><span id="round-count"></span></div><div id="display-rounds" class="display-rounds"></div></section>
+  </main>
+{% endif %}
   <script>window.BRACKET = {{ {'id': bracket_id, 'token': token, 'owner': owner}|tojson }};</script>
-  <script src="{{ url_for('static', filename='bracket.js') }}"></script>
+  <script src="{{ url_for('static', filename='bracket.js' if owner else 'display.js') }}"></script>
 </body>
 </html>

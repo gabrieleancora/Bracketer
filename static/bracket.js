@@ -1,5 +1,5 @@
 const config = window.BRACKET;
-const base = config.owner ? `/api/owner/${config.id}/${config.token}` : `/api/brackets/${config.id}`;
+const base = `/api/owner/${config.id}/${config.token}`;
 let state = null;
 let currentVersion = 0;
 
@@ -22,7 +22,7 @@ async function send(url, payload) {
 }
 
 async function act(url, payload) {
-  try { await send(url, payload); showNotice(url.endsWith('/vote') ? 'Vote recorded.' : ''); }
+  try { await send(url, payload); showNotice(''); }
   catch (error) { showNotice(error.message); }
 }
 
@@ -61,7 +61,7 @@ function drawRounds() {
         row.append(el('span', 'contestant-name', nameFor(id)));
         if (id !== null) {
           const link = songLink(id); if (link) row.append(link);
-          if (config.owner && !state.public_voting) row.append(button(match.winner === id ? '✓' : 'Pick', () => act(`${base}/winner`, {match_id:match.id, choice:id}), 'pick-button'));
+          if (!state.public_voting) row.append(button(match.winner === id ? '✓' : 'Pick', () => act(`${base}/winner`, {match_id:match.id, choice:id}), 'pick-button'));
         }
         card.append(row);
       });
@@ -80,7 +80,6 @@ function drawOwner() {
   if (state.published) {
     const url = new URL(`/b/${config.id}`, location.href).href;
     const link = document.getElementById('public-link'); link.href = url; link.textContent = url;
-    document.getElementById('qr').src = `${base}/qr.svg`;
   }
   const controls = document.getElementById('vote-controls'); controls.hidden = !state.public_voting; controls.replaceChildren();
   if (state.public_voting) {
@@ -92,7 +91,7 @@ function drawOwner() {
       const next = current || state.rounds.flat().find(match => match.a !== null && match.b !== null && match.winner === null);
       controls.append(next ? button('Open voting →', () => act(`${base}/vote-control`, {action:'open'}), 'primary-button') : el('p', 'muted', 'The bracket is complete.'));
     } else if (phase === 'open') {
-      controls.append(el('p', 'muted', 'Voting is open. Share the QR code with attendees.'));
+      controls.append(el('p', 'muted', 'Voting is open. Attendees can scan the QR code on the projector display.'));
       controls.append(button('Close voting', () => act(`${base}/vote-control`, {action:'close'}), 'primary-button'));
     } else if (phase === 'closed' && current) {
       const a = Number(state.counts?.[current.a] || 0), b = Number(state.counts?.[current.b] || 0);
@@ -132,12 +131,7 @@ function drawVote() {
   panel.append(el('h2', '', `${nameFor(current.a)} vs ${nameFor(current.b)}`));
   const phase = state.voting.phase;
   if (phase === 'open') {
-    panel.append(el('p', 'muted', state.has_voted && !config.owner ? 'Your vote has been recorded. Waiting for voting to close.' : 'Voting is open. Choose your favorite.'));
-    if (!config.owner && !state.has_voted) {
-      const options = el('div', 'vote-options');
-      [current.a, current.b].forEach(id => options.append(button(nameFor(id), () => act(`/api/brackets/${config.id}/vote`, {choice:id}), 'vote-button')));
-      panel.append(options);
-    }
+    panel.append(el('p', 'muted', 'Voting is open on the attendee page.'));
   } else if (phase === 'closed') panel.append(el('p', 'muted', 'Voting is closed. Waiting for the winner to be revealed.'));
   else if (phase === 'revealed') panel.append(el('p', 'revealed-winner', `Winner · ${nameFor(current.winner)}`));
   else panel.append(el('p', 'muted', 'The next vote will open soon.'));
@@ -147,30 +141,23 @@ function render() {
   document.title = `${state.title} · Bracketer`;
   document.getElementById('title').textContent = state.title;
   document.getElementById('status').textContent = state.published ? (state.public_voting ? 'LIVE BRACKET · PUBLIC VOTING' : 'PUBLISHED BRACKET') : 'PRIVATE DRAFT';
-  document.getElementById('subtitle').textContent = config.owner ? 'Choose winners, configure voting, and share the bracket when you are ready.' : 'Follow every matchup as the bracket unfolds.';
-  drawRounds(); drawVote(); if (config.owner) drawOwner();
+  document.getElementById('subtitle').textContent = 'Choose winners, configure voting, and share the bracket when you are ready.';
+  drawRounds(); drawVote(); drawOwner();
 }
 
 async function load(force=false) {
   const response = await fetch(base);
   if (!response.ok) {
-    if (response.status === 404 && !config.owner) { showNotice('This bracket is no longer published.'); return; }
     showNotice('Could not load the bracket.'); return;
   }
   const next = await response.json();
   if (force || next.version !== currentVersion || next.has_voted !== state?.has_voted) { state = next; currentVersion = next.version; render(); }
 }
 
-if (config.owner) {
-  document.getElementById('published').addEventListener('change', event => act(`${base}/settings`, {field:'published', value:event.target.checked}));
-  document.getElementById('public-voting').addEventListener('change', event => act(`${base}/settings`, {field:'public_voting', value:event.target.checked}));
-  document.getElementById('copy-owner').addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(location.href); showNotice('Owner link copied.'); }
-    catch { showNotice('Copy the owner link from your browser address bar.'); }
-  });
-} else {
-  const events = new EventSource(`/api/brackets/${config.id}/events`);
-  events.onmessage = () => load();
-  events.addEventListener('unpublished', () => { events.close(); showNotice('This bracket is no longer published.'); });
-}
+document.getElementById('published').addEventListener('change', event => act(`${base}/settings`, {field:'published', value:event.target.checked}));
+document.getElementById('public-voting').addEventListener('change', event => act(`${base}/settings`, {field:'public_voting', value:event.target.checked}));
+document.getElementById('copy-owner').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(location.href); showNotice('Owner link copied.'); }
+  catch { showNotice('Copy the owner link from your browser address bar.'); }
+});
 load();

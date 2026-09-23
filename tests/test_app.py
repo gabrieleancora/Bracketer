@@ -39,7 +39,8 @@ class BracketFlowTest(unittest.TestCase):
         self.assertEqual(self.client.post(f'/api/owner/{bracket_id}/wrong/winner', json={}).status_code, 404)
         self.client.post(f'/api/owner/{bracket_id}/{token}/settings', json={'field':'published','value':True})
         self.assertEqual(self.client.get(public_url).status_code, 200)
-        self.assertIn(b'<svg', self.client.get(f'/api/owner/{bracket_id}/{token}/qr.svg').data)
+        self.assertEqual(self.client.get(f'/vote/{bracket_id}').status_code, 404)
+        self.assertEqual(self.client.get(f'/api/brackets/{bracket_id}/qr.svg').status_code, 404)
         first = self.owner(bracket_id, token)['rounds'][0][0]
         self.assertEqual(self.client.post(f'/api/owner/{bracket_id}/{token}/winner', json={'match_id':first['id'],'choice':first['a']}).status_code, 200)
         self.assertEqual(self.owner(bracket_id, token)['rounds'][1][0]['a'], first['a'])
@@ -55,6 +56,12 @@ class BracketFlowTest(unittest.TestCase):
         self.assertEqual(self.client.post(settings, json={'field':'public_voting','value':True}).status_code, 200)
         self.assertEqual(self.client.post(controls, json={'action':'open'}).status_code, 400)
         self.client.post(settings, json={'field':'published','value':True})
+        display = self.client.get(f'/b/{bracket_id}')
+        self.assertEqual(display.status_code, 200)
+        self.assertNotIn(b'New bracket', display.data)
+        self.assertNotIn(b'OWNER CONTROLS', display.data)
+        self.assertIn(b'<svg', self.client.get(f'/api/brackets/{bracket_id}/qr.svg').data)
+        self.assertEqual(self.client.get(f'/vote/{bracket_id}').status_code, 200)
         self.assertEqual(self.client.post(controls, json={'action':'open'}).status_code, 200)
         match = self.owner(bracket_id, token)['rounds'][0][0]
         vote = f'/api/brackets/{bracket_id}/vote'
@@ -62,10 +69,14 @@ class BracketFlowTest(unittest.TestCase):
         self.assertTrue(self.client.get(f'/api/brackets/{bracket_id}').json['has_voted'])
         self.assertEqual(self.client.post(vote, json={'choice':match['b']}).status_code, 409)
         self.assertNotIn('counts', self.client.get(f'/api/brackets/{bracket_id}').json)
+        self.assertEqual(self.client.get(f'/api/brackets/{bracket_id}').json['results'], {})
         self.assertEqual(self.client.post(controls, json={'action':'close'}).status_code, 200)
+        self.assertEqual(self.client.get(f'/api/brackets/{bracket_id}').json['results'], {})
         self.assertEqual(self.client.post(vote, json={'choice':match['b']}).status_code, 400)
         self.assertEqual(self.client.post(controls, json={'action':'reveal'}).status_code, 200)
         self.assertEqual(self.owner(bracket_id, token)['rounds'][0][0]['winner'], match['a'])
+        self.assertEqual(self.client.get(f'/api/brackets/{bracket_id}').json['results'][match['id']],
+                         {str(match['a']): 1, str(match['b']): 0})
         self.assertEqual(self.client.post(controls, json={'action':'advance'}).status_code, 200)
         self.assertIsNone(self.owner(bracket_id, token)['voting']['current'])
 
@@ -88,6 +99,8 @@ class BracketFlowTest(unittest.TestCase):
         match = self.owner(bracket_id, token)['rounds'][0][0]
         self.assertEqual(self.client.post(controls, json={'action':'reveal','choice':match['b']}).status_code, 200)
         self.assertEqual(self.owner(bracket_id, token)['rounds'][0][0]['winner'], match['b'])
+        self.assertEqual(self.client.get(f'/api/brackets/{bracket_id}').json['results'][match['id']],
+                         {str(match['a']): 0, str(match['b']): 0})
 
 
 if __name__ == '__main__':

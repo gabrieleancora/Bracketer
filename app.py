@@ -144,6 +144,19 @@ def public_state(row, data, owner=False):
         "love_live": data["love_live"],
         "version": row["version"],
     }
+    if row["public_voting"]:
+        revealed = {match["id"]: match for round_matches in data["rounds"]
+                    for match in round_matches if match["winner"] is not None}
+        counts = {match_id: {str(match["a"]): 0, str(match["b"]): 0}
+                  for match_id, match in revealed.items()}
+        if revealed:
+            for vote in db().execute(
+                "SELECT match_id, choice, COUNT(*) AS count FROM votes WHERE bracket_id=? GROUP BY match_id, choice",
+                (row["id"],),
+            ):
+                if vote["match_id"] in counts:
+                    counts[vote["match_id"]][str(vote["choice"])] = vote["count"]
+        state["results"] = counts
     if owner:
         current = data["voting"]["current"]
         if current and data["voting"]["phase"] in ("closed", "revealed"):
@@ -225,6 +238,14 @@ def owner_page(bracket_id, token):
 def visitor_page(bracket_id):
     get_bracket(bracket_id)
     return render_template("bracket.html", bracket_id=bracket_id, token=None, owner=False)
+
+
+@app.get("/vote/<bracket_id>")
+def attendee_page(bracket_id):
+    row, data = get_bracket(bracket_id)
+    if not row["public_voting"]:
+        abort(404)
+    return render_template("vote.html", bracket_id=bracket_id)
 
 
 @app.get("/api/brackets/<bracket_id>")
@@ -370,10 +391,12 @@ def events(bracket_id):
     return Response(stream(), mimetype="text/event-stream", headers={"X-Accel-Buffering": "no"})
 
 
-@app.get("/api/owner/<bracket_id>/<token>/qr.svg")
-def qr_code(bracket_id, token):
-    get_bracket(bracket_id, owner=True)
-    url = request.host_url.rstrip("/") + f"/b/{bracket_id}"
+@app.get("/api/brackets/<bracket_id>/qr.svg")
+def qr_code(bracket_id):
+    row, data = get_bracket(bracket_id)
+    if not row["public_voting"]:
+        abort(404)
+    url = request.host_url.rstrip("/") + f"/vote/{bracket_id}"
     qr = qrcode.QRCode(border=2, box_size=5)
     qr.add_data(url)
     qr.make(fit=True)

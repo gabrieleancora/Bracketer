@@ -10,9 +10,11 @@ python -m venv .venv
 .venv\Scripts\python app.py
 ```
 
-Open `http://127.0.0.1:5000`. Data is stored in `instance/bracketer.sqlite3`.
+Open `http://127.0.0.1:5000` to create a bracket. Data is stored in `instance/bracketer.sqlite3`.
 
-The owner link contains a secret token. Keep it private; anyone with it can control the bracket. The public link and QR code are usable by visitors when the bracket is published. To let people on other devices connect, set `BRACKETER_HOST=0.0.0.0` when starting the server, then open the owner page using the computer's reachable LAN address before sharing its QR code.
+The owner link contains a secret token. Keep it private; anyone with it can control the bracket. The owner page links to the published projector display. When public voting is enabled, that display keeps a QR code on screen for attendees; it opens a separate voting page on their devices. Revealed winners and both entry vote counts appear on the display.
+
+To let attendees connect from other devices, start the server with `$env:BRACKETER_HOST = '0.0.0.0'`, then open the owner page using the computer's reachable LAN address before sharing the projector display. The QR code uses the display page's host address.
 
 The Love Live catalog is a local copy of the [supplied song data](https://github.com/hamproductions/the-sorter/blob/main/data/song-info.json). Names are matched case-insensitively against `name` and `englishName`. Ambiguous names are left unmatched so the owner can supply a YouTube video ID.
 
