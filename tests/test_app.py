@@ -11,6 +11,7 @@ class BracketFlowTest(unittest.TestCase):
         os.environ["BRACKETER_DB"] = str(Path(self.temp.name) / "test.sqlite3")
         import app
         self.app_module = importlib.reload(app)
+        self.app_module.init_db()
         self.client = self.app_module.app.test_client()
 
     def tearDown(self):
@@ -102,6 +103,29 @@ class BracketFlowTest(unittest.TestCase):
         self.assertEqual(self.owner(bracket_id, token)['rounds'][0][0]['winner'], match['b'])
         self.assertEqual(self.client.get(f'/api/brackets/{bracket_id}').json['results'][match['id']],
                          {str(match['a']): 0, str(match['b']): 0})
+
+    def test_readiness_does_not_create_missing_database_and_host_is_checked(self):
+        self.assertEqual(self.client.get('/healthz').status_code, 200)
+        self.assertEqual(self.client.get('/readyz').status_code, 200)
+        missing = Path(self.temp.name) / 'missing.sqlite3'
+        original = self.app_module.DB_PATH
+        try:
+            self.app_module.DB_PATH = missing
+            self.assertEqual(self.client.get('/readyz').status_code, 503)
+            self.assertFalse(missing.exists())
+        finally:
+            self.app_module.DB_PATH = original
+        self.app_module.app.config['TRUSTED_HOSTS'] = ['brackets.example.com']
+        self.assertEqual(self.client.get('/', headers={'Host': 'attacker.example.com'}).status_code, 400)
+        self.assertEqual(self.client.post('/api/brackets', data=b'x' * (64 * 1024 + 1),
+                                          headers={'Host': 'brackets.example.com',
+                                                   'Content-Type': 'application/json'}).status_code, 413)
+
+    def test_explicit_init_is_idempotent(self):
+        bracket_id, token = self.create()
+        result = self.app_module.app.test_cli_runner().invoke(args=['init-db'])
+        self.assertEqual(result.exit_code, 0, result.output)
+        self.assertEqual(self.owner(bracket_id, token)['title'], 'Test bracket')
 
 
 if __name__ == '__main__':

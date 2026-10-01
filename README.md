@@ -2,6 +2,10 @@
 
 A small single-elimination bracket website with owner-controlled results, optional public voting, and optional Love Live song links.
 
+Production deployment work is specified in the [WSGI and deployment implementation plan](planning/DEPLOYMENT_PLAN.md), including optional container packaging and acceptance checks for the implementing agent.
+
+The Linux container setup and operator steps are in [the deployment runbook](docs/DEPLOYMENT.md). This setup has not passed the plan's production capacity gate.
+
 ## Run
 
 ```powershell
