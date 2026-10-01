@@ -1,0 +1,53 @@
+services:
+  app:
+    build: .
+    image: bracketer:local
+    environment:
+      BRACKETER_DB: /var/lib/bracketer/bracketer.sqlite3
+      BRACKETER_BIND: 0.0.0.0:8000
+      BRACKETER_TRUST_PROXY: "1"
+      BRACKETER_TRUSTED_HOSTS: ${BRACKETER_DOMAIN:?Set BRACKETER_DOMAIN in .env},127.0.0.1
+      BRACKETER_THREADS: ${BRACKETER_THREADS:-384}
+    volumes:
+      - bracketer-data:/var/lib/bracketer
+    restart: unless-stopped
+    stop_grace_period: 45s
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/readyz',timeout=3).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  proxy:
+    image: caddy:2
+    environment:
+      BRACKETER_DOMAIN: ${BRACKETER_DOMAIN:?Set BRACKETER_DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+    stop_grace_period: 45s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  bracketer-data:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,12 @@
+{$BRACKETER_DOMAIN} {
+    request_body {
+        max_size 64KB
+    }
+
+    reverse_proxy app:8000 {
+        flush_interval -1
+        transport http {
+            read_timeout 75s
+        }
+    }
+}

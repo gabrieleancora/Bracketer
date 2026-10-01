@@ -1,0 +1,25 @@
+[Unit]
+Description=Bracketer WSGI service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=bracketer
+Group=bracketer
+WorkingDirectory=/opt/bracketer/current
+EnvironmentFile=/etc/bracketer/bracketer.env
+ExecStartPre=/opt/bracketer/current/.venv/bin/python -m flask --app app init-db
+ExecStart=/opt/bracketer/current/.venv/bin/gunicorn --config gunicorn.conf.py app:app
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=45
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/bracketer
+
+[Install]
+WantedBy=multi-user.target
